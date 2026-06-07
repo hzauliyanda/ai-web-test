@@ -211,10 +211,20 @@ p4-browser-test-runner-devtools 会自动处理：
 ├── tests/
 │   ├── suite.yaml
 │   ├── traceability.json
-│   └── s1-xxx.yaml ...
+│   ├── s1-xxx.yaml ...
+│   └── playwright/                     # Playwright 回归脚本
+│       ├── package.json
+│       ├── playwright.config.ts
+│       ├── auth.setup.ts
+│       └── s1-xxx.spec.ts ...
 └── {项目名}-UI自动化测试报告-{date}.html
 
 📊 报告已自动在浏览器中打开。
+
+🔄 回归测试:
+cd {输出目录}/tests/playwright
+npm install && npx playwright install chromium
+npx playwright test
 ```
 
 ## 错误处理

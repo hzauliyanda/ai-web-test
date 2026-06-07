@@ -172,10 +172,29 @@ Ant Design 等框架的下拉框：
 ```
 {项目输出目录}/
 ├── tests/
-│   └── screenshots/                    # 失败步骤截图
-│       └── S{n}-{步骤序号}-fail.png
+│   ├── screenshots/                    # 失败步骤截图
+│   │   └── S{n}-{步骤序号}-fail.png
+│   └── playwright/                     # Playwright 回归脚本
+│       ├── package.json
+│       ├── playwright.config.ts
+│       ├── auth.setup.ts               # 登录 setup（如需登录）
+│       ├── s1-xxx.spec.ts
+│       ├── s2-xxx.spec.ts
+│       └── ...
 └── {项目名}-UI自动化测试报告-{date}.html   # HTML 覆盖报告
 ```
+
+### 运行 Playwright 回归脚本
+
+```bash
+cd {项目输出目录}/tests/playwright
+npm install
+npx playwright install chromium
+npx playwright test            # 无头模式
+npx playwright test --headed   # 有头模式
+```
+
+回归测试无需 AI 参与，直接运行 Playwright 脚本即可。
 
 报告生成后自动在浏览器中打开。
 

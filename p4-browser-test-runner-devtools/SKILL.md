@@ -122,7 +122,38 @@ description: >
 
 ### 步骤 3：执行测试场景
 
-对每个场景，按顺序执行步骤。每个步骤的执行方式：
+对每个场景，按顺序执行步骤。
+
+**元素信息采集**：每个步骤成功执行后，从快照中记录实际操作的元素信息，用于步骤 6 生成 Playwright 脚本。记录格式：
+
+```json
+{
+  "scenario": "S1",
+  "step_index": 2,
+  "action": "click",
+  "description": "点击新增处罚按钮",
+  "status": "pass",
+  "locator": {
+    "role": "button",
+    "name": "新增处罚",
+    "url": null
+  }
+}
+```
+
+| action | 需记录的 locator 字段 |
+|--------|----------------------|
+| navigate | `url` (相对路径) |
+| click | `role`, `name` (元素的 a11y role 和 accessible name) |
+| input | `role` (通常 textbox), `name` 或 `placeholder`, `value` |
+| select | `role` (combobox), `name`, `option_role` (option), `option_name` (选中的选项文本) |
+| assert | `snapshot_hint` (断言时的页面关键文字/元素，用于生成 expect) |
+| wait | `seconds` 或 `text` (等待的关键文字) |
+| scroll | `direction` |
+
+**只记录成功的步骤**，失败的步骤不记录 locator。
+
+每个步骤的执行方式：
 
 #### navigate — 页面导航
 
@@ -289,7 +320,13 @@ direction: "down"
 ├── tests/
 │   ├── suite.yaml
 │   ├── traceability.json
-│   └── s1-xxx.yaml ...
+│   ├── s1-xxx.yaml ...
+│   └── playwright/                  # Playwright 回归脚本（步骤 6 生成）
+│       ├── package.json
+│       ├── playwright.config.ts
+│       ├── auth.setup.ts
+│       ├── s1-xxx.spec.ts
+│       └── ...
 └── {项目名}-UI自动化测试报告-{date}.html
 ```
 
@@ -340,7 +377,180 @@ direction: "down"
 
 生成后使用 Bash 工具 `open` 命令在浏览器中打开报告。
 
-### 步骤 6：失败分析（如有失败）
+### 步骤 6：生成 Playwright 回归脚本
+
+**仅对全部步骤通过的场景生成**。失败或跳过的场景不生成。
+
+#### 6.1 收集生成数据
+
+从步骤 3 采集的元素信息中，筛选所有 status=pass 的步骤记录。
+
+#### 6.2 输出目录
+
+```
+{项目输出目录}/
+├── tests/
+│   ├── suite.yaml
+│   ├── s1-xxx.yaml ...
+│   └── playwright/                  # Playwright 回归脚本
+│       ├── package.json
+│       ├── playwright.config.ts
+│       ├── auth.setup.ts            # 登录 setup（如需登录）
+│       ├── s1-xxx.spec.ts
+│       ├── s2-xxx.spec.ts
+│       └── ...
+```
+
+#### 6.3 生成 package.json
+
+```json
+{
+  "name": "{project}-playwright-tests",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}
+```
+
+#### 6.4 生成 playwright.config.ts
+
+```typescript
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: '.',
+  timeout: 30000,
+  use: {
+    baseURL: '{base_url}',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    // 如果需要登录，添加 setup project
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    {
+      name: 'chromium',
+      use: { storageState: 'auth.json' },
+      dependencies: ['setup'],
+    },
+  ],
+});
+```
+
+如果不需要登录，去掉 setup project 和 storageState：
+
+```typescript
+export default defineConfig({
+  testDir: '.',
+  timeout: 30000,
+  use: {
+    baseURL: '{base_url}',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+});
+```
+
+#### 6.5 生成 auth.setup.ts（如需登录）
+
+从 `~/.claude/test-login-configs.json` 读取登录配置：
+
+```typescript
+import { test as setup, expect } from '@playwright/test';
+
+const authFile = 'auth.json';
+
+setup('登录', async ({ page }) => {
+  await page.goto('{login_url}');
+  await page.getByRole('textbox', { name: /账号|用户名/ }).fill('{username}');
+  await page.getByRole('textbox', { name: /密码/ }).fill('{password}');
+  await page.getByRole('button', { name: /登录/ }).click();
+  // 等待登录成功
+  await page.waitForURL('**/'); // 根据实际跳转调整
+  await page.context().storageState({ path: authFile });
+});
+```
+
+#### 6.6 生成场景 spec.ts
+
+每个通过的场景生成一个 `.spec.ts` 文件。
+
+**Locator 生成规则**（根据步骤 3 采集的元素信息）：
+
+| 采集的 locator 信息 | 生成的 Playwright 代码 |
+|--------------------|-----------------------|
+| `role: "button", name: "新增处罚"` | `page.getByRole('button', { name: '新增处罚' })` |
+| `role: "link", name: "查看"` | `page.getByRole('link', { name: '查看' })` |
+| `role: "textbox", name: "任务名称"` | `page.getByRole('textbox', { name: '任务名称' })` |
+| `role: "combobox", name: "处罚主体"` | `page.getByRole('combobox', { name: '处罚主体' })` |
+| `role: "option", name: "商品"` | `page.getByRole('option', { name: '商品' })` |
+| 无 role，有文本 | `page.getByText('文本内容')` |
+
+**spec.ts 模板**：
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('{场景名称}', () => {
+
+  test('{步骤编号}: {步骤描述}', async ({ page }) => {
+    // S{n}-{序号}: {步骤描述}
+    await page.goto('{url}');
+    // ... 按采集的 locator 生成操作步骤
+    // assert 步骤生成 expect
+  });
+
+  // 如有多个 test，可按步骤拆分或合为一个 test
+});
+```
+
+**各 action 到 Playwright 的映射**：
+
+| YAML action | Playwright 代码 |
+|-------------|----------------|
+| `navigate, url: "/xxx"` | `await page.goto('/xxx');` |
+| `click, locator: {role:"button", name:"新增"}` | `await page.getByRole('button', { name: '新增' }).click();` |
+| `input, locator: {role:"textbox", name:"任务名称"}, value: "测试"` | `await page.getByRole('textbox', { name: '任务名称' }).fill('测试');` |
+| `select, locator: {role:"combobox", name:"主体"}, option: "商品"` | `await page.getByRole('combobox', { name: '主体' }).click();` + `await page.getByRole('option', { name: '商品' }).click();` |
+| `assert, snapshot_hint: "列表展示了任务数据"` | `await expect(page.locator('table')).toBeVisible();` 或 `await expect(page.getByText(/任务/)).toBeVisible();` |
+| `wait, seconds: 3` | `await page.waitForTimeout(3000);` |
+| `wait, text: "加载完成"` | `await page.getByText('加载完成').waitFor();` |
+| `scroll, direction: "down"` | `await page.mouse.wheel(0, 500);` |
+
+#### 6.7 断言（assert）的 Playwright 映射
+
+assert 步骤的 description 通常比较宽泛，根据 `snapshot_hint`（断言通过时的页面关键信息）生成合理的 expect：
+
+- 页面加载/跳转 → `await expect(page).toHaveURL(/pattern/);`
+- 元素可见 → `await expect(page.getByRole('xxx', { name: 'yyy' })).toBeVisible();`
+- 表格有数据 → `await expect(page.locator('table tbody tr')).toHaveCount({ expect: '>0' });` 或 `await expect(page.locator('table')).toBeVisible();`
+- 提示文字 → `await expect(page.getByText('成功')).toBeVisible();`
+- 宽泛描述 → 使用 `await expect(page.locator('body')).toContainText('关键词');`
+
+#### 6.8 生成后操作
+
+1. 在 playwright 目录下生成 `package.json`、`playwright.config.ts`、`auth.setup.ts`（如需）、各场景 `spec.ts`
+2. 输出使用说明：
+```
+Playwright 回归脚本已生成！
+
+📁 目录: {输出目录}/tests/playwright/
+
+🚀 运行方式:
+cd {输出目录}/tests/playwright
+npm install
+npx playwright install chromium
+npx playwright test            # 无头模式
+npx playwright test --headed   # 有头模式
+```
+
+### 步骤 7：失败分析（如有失败）
 
 对每个失败步骤：
 1. 读取步骤 4 保存的失败截图（`{输出目录}/screenshots/S{n}-{步骤序号}-fail.png`）
@@ -389,3 +599,5 @@ suite.yaml 中的 `depends_on`：
 8. **不启动新浏览器**：直接操作用户已有的 Chrome 窗口
 9. **报告以功能用例为准**：报告维度围绕 TC-ID 组织，不是 UI 场景
 10. **traceability.json 自动读取**：如 YAML 同目录存在 traceability.json，自动用于 TC-ID 覆盖映射
+11. **Playwright 回归脚本基于实际执行结果**：只从成功步骤采集元素信息，不直接从 YAML 生成，确保脚本可靠
+12. **仅通过过的场景生成 spec.ts**：失败或跳过的场景不生成，避免生成有问题的脚本
