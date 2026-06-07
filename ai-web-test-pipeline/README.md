@@ -102,12 +102,41 @@
 | p3-ui-test-case-generator | `skills/p3-ui-test-case-generator/` | 生成 UI 自动化用例 |
 | p4-browser-test-runner-devtools | `skills/p4-browser-test-runner-devtools/` | 执行测试，生成报告 |
 
-## 安装方式
+## 安装
 
-将所有 skill 目录复制到 `~/.claude/skills/` 下：
+**仓库地址**：`https://github.com/hzauliyanda/ai-web-test.git`
+
+### 方式一：让 AI 工具自己安装
+
+直接把仓库地址发给你的 AI 工具（Claude Code / Codex / OpenCode / Cursor 等），告诉它：
 
 ```
-~/.claude/skills/
+帮我安装以下 GitHub 仓库中的 skills：https://github.com/hzauliyanda/ai-web-test.git
+```
+
+AI 会自动克隆仓库并放到正确的目录。
+
+### 方式二：手动安装
+
+克隆仓库后，将 5 个 skill 目录复制到对应工具的 skills 目录下：
+
+| 工具 | Skills 目录 |
+|------|------------|
+| Claude Code | `~/.claude/skills/` |
+| Codex | 项目根目录或 `~/.codex/skills/` |
+| OpenCode | `~/.config/opencode/skills/` |
+| Cursor | `.cursor/skills/` |
+
+```bash
+git clone https://github.com/hzauliyanda/ai-web-test.git
+# 复制到你的工具 skills 目录，例如 Claude Code：
+cp -r ai-web-test/* ~/.claude/skills/
+```
+
+安装后的目录结构：
+
+```
+{skills目录}/
 ├── ai-web-test-pipeline/
 ├── p1-web-explorer/
 ├── p2-test-case-generator/
@@ -115,7 +144,7 @@
 └── p4-browser-test-runner-devtools/
 ```
 
-确保 Chrome DevTools MCP 插件已在 Claude Code 中启用。
+确保 Chrome DevTools MCP 插件已在工具中启用。
 
 ## 典型使用场景
 

@@ -190,6 +190,28 @@ p4-browser-test-runner-devtools/
 └── scripts/              # 预留脚本目录
 ```
 
+## 安装
+
+**仓库地址**：`https://github.com/hzauliyanda/ai-web-test.git`
+
+### 方式一：让 AI 工具自己安装
+
+```
+帮我安装以下 GitHub 仓库中的 skills：https://github.com/hzauliyanda/ai-web-test.git
+```
+
+### 方式二：手动安装
+
+```bash
+git clone https://github.com/hzauliyanda/ai-web-test.git
+# Claude Code
+cp -r ai-web-test/p4-browser-test-runner-devtools ~/.claude/skills/
+# Codex
+cp -r ai-web-test/p4-browser-test-runner-devtools ~/.codex/skills/
+# OpenCode
+cp -r ai-web-test/p4-browser-test-runner-devtools ~/.config/opencode/skills/
+```
+
 ## 重要说明
 
 1. **登录非必须**：浏览器已登录时自动跳过，未登录时才触发

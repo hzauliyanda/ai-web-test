@@ -224,6 +224,28 @@ p3-ui-test-case-generator/
     └── generate_xlsx.py  # 软链接到 p2-test-case-generator 的脚本
 ```
 
+## 安装
+
+**仓库地址**：`https://github.com/hzauliyanda/ai-web-test.git`
+
+### 方式一：让 AI 工具自己安装
+
+```
+帮我安装以下 GitHub 仓库中的 skills：https://github.com/hzauliyanda/ai-web-test.git
+```
+
+### 方式二：手动安装
+
+```bash
+git clone https://github.com/hzauliyanda/ai-web-test.git
+# Claude Code
+cp -r ai-web-test/p3-ui-test-case-generator ~/.claude/skills/
+# Codex
+cp -r ai-web-test/p3-ui-test-case-generator ~/.codex/skills/
+# OpenCode
+cp -r ai-web-test/p3-ui-test-case-generator ~/.config/opencode/skills/
+```
+
 ## 重要说明
 
 1. **双文件输入**：功能地图提供页面结构和元素信息，功能测试用例提供 TC-ID 和覆盖维度

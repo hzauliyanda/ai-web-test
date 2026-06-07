@@ -206,6 +206,28 @@ python scripts/fetch_figma.py "<Figma URL>" -o figma-analysis.md
 | 默认负责人 | `TESTCASE_DEFAULT_ASSIGNEE` | `<YOUR_ASSIGNEE>` | XLSX 负责人列默认值 |
 | Figma 令牌 | `FIGMA_ACCESS_TOKEN` | — | Figma API 访问令牌（备选方案使用） |
 
+## 安装
+
+**仓库地址**：`https://github.com/hzauliyanda/ai-web-test.git`
+
+### 方式一：让 AI 工具自己安装
+
+```
+帮我安装以下 GitHub 仓库中的 skills：https://github.com/hzauliyanda/ai-web-test.git
+```
+
+### 方式二：手动安装
+
+```bash
+git clone https://github.com/hzauliyanda/ai-web-test.git
+# Claude Code
+cp -r ai-web-test/p2-test-case-generator ~/.claude/skills/
+# Codex
+cp -r ai-web-test/p2-test-case-generator ~/.codex/skills/
+# OpenCode
+cp -r ai-web-test/p2-test-case-generator ~/.config/opencode/skills/
+```
+
 ## 重要说明
 
 1. **完整读取文档**：使用分段读取或 Task 代理确保不遗漏任何章节

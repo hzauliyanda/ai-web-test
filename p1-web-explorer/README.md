@@ -112,6 +112,28 @@
 ### 5. 生成功能地图
 按 `references/output-template.md` 模板结构生成 Markdown 文件，写入后设置文件权限。
 
+## 安装
+
+**仓库地址**：`https://github.com/hzauliyanda/ai-web-test.git`
+
+### 方式一：让 AI 工具自己安装
+
+```
+帮我安装以下 GitHub 仓库中的 skills：https://github.com/hzauliyanda/ai-web-test.git
+```
+
+### 方式二：手动安装
+
+```bash
+git clone https://github.com/hzauliyanda/ai-web-test.git
+# Claude Code
+cp -r ai-web-test/p1-web-explorer ~/.claude/skills/
+# Codex
+cp -r ai-web-test/p1-web-explorer ~/.codex/skills/
+# OpenCode
+cp -r ai-web-test/p1-web-explorer ~/.config/opencode/skills/
+```
+
 ## 目录结构
 
 ```
